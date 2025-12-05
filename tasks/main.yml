@@ -2,7 +2,7 @@
 - name: Ensure PIP config directory exist and can be written in.
   file:
     dest: "{{ pipconfig_dir }}"
-    mode: "0700"
+    mode: "{{ (pipconfig_dir_mode | default(None,true) == None) | ternary(omit, pipconfig_dir_mode) }}"
     state: directory
 
 - name: Install PIP config
@@ -10,12 +10,5 @@
     dest: "{{ pipconfig_dir + '/' + pipconfig_file }}"
     mode: "{{ pipconfig_file_mode }}"
     src: "pip.conf"
-
-- name: Ensure PIP's configuration directory has proper permissions.
-  file:
-    dest: "{{ pipconfig_dir }}"
-    mode: "{{ pipconfig_dir_mode }}"
-    state: directory
-
 
 # vim: et:sw=2:syntax=yaml:ts=2:
