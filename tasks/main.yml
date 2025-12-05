@@ -1,20 +1,35 @@
 ---
-- name: Ensure PIP config directory exist and can be written in.
-  vars:
-    file_parent_dir: "{{ pipconfig_file | dirname }}"
-    dest: "{{ (pipconfig_dir | default(None,true) == None) | ternary(file_parent_dir, pipconfig_dir) }}"
-  file:
-    dest: "{{ dest }}"
-    mode: "{{ (pipconfig_dir_mode | default(None,true) == None) | ternary(omit, pipconfig_dir_mode) }}"
-    state: directory
+- when: pipconfig_file | default(None,true) != None
+  block:
+  - name: Ensure PIP config directory exist and can be written in.
+    vars:
+      file_parent_dir: "{{ pipconfig_file | dirname }}"
+      dest: "{{ (pipconfig_dir | default(None,true) == None) | ternary(file_parent_dir, pipconfig_dir) }}"
+    file:
+      dest: "{{ dest }}"
+      mode: "{{ (pipconfig_dir_mode | default(None,true) == None) | ternary(omit, pipconfig_dir_mode) }}"
+      state: directory
 
-- name: Install PIP config
+  - name: Install PIP config
+    vars:
+      dir_file_path: "{{ pipconfig_dir + '/' + pipconfig_file }}"
+      dest: "{{ (pipconfig_dir | default(None,true) == None) | ternary(pipconfig_file, dir_file_path) }}"
+    template:
+      dest: "{{ dest }}"
+      mode: "{{ pipconfig_file_mode }}"
+      src: "{{ pipconfig_template_file }}"
+
+- # when: pipconfig_pip_options | length > 0
   vars:
-    dir_file_path: "{{ pipconfig_dir + '/' + pipconfig_file }}"
-    dest: "{{ (pipconfig_dir | default(None,true) == None) | ternary(pipconfig_file, dir_file_path) }}"
-  template:
-    dest: "{{ dest }}"
-    mode: "{{ pipconfig_file_mode }}"
-    src: "{{ pipconfig_template_file }}"
+    level: "--{{ pipconfig_pip_level | default('user') }}"
+  block:
+  - name: Use pip command to set
+    become: "{{ level == '--global' }}"
+    environment:
+      PATH: "{{ (pipconfig_pip_virtualenv | length > 0) | ternary(pipconfig_pip_virtualenv ~ '/bin:' ~ ansible_env.PATH, ansible_env.PATH) }}"
+    loop: "{{ pipconfig_pip_options | default({},true) | dict2items() }}"
+    shell:
+      cmd: "{{ pipconfig_pip_cmd }} config {{ level }} set {{ item.key }} \"{{ item.value }}\""
+      executable: /bin/bash
 
 # vim: et:sw=2:syntax=yaml:ts=2:

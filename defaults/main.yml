@@ -9,3 +9,16 @@ pipconfig_index_url: ""
 pipconfig_timeout: 10
 
 pipconfig_template_file: "pip.conf"
+
+# when level use '--site' path must be venv path,
+# this directory will be inserted at the beginning of the PATH.
+pipconfig_pip_virtualenv: ""
+#
+pipconfig_pip_cmd: "python3 -m pip"
+# The global level will need to become
+pipconfig_pip_level: user
+#
+pipconfig_pip_options: {}
+  # global.index-url: https://pypi.example.com/simple
+  # global.timeout: 100
+  # install.extra-index-url: https://pypi.example.com/simple\nhttps://pypi.example.com/simple2
