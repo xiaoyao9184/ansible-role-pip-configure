@@ -10,6 +10,11 @@ pipconfig_timeout: 10
 
 pipconfig_template_file: "pip.conf"
 
+# Whether to upgrade pip
+# This does not affect the use of templates to set up pip.conf
+# It can be set `before` or `after`` running the pip config command.
+pipconfig_pip_upgrade: none
+
 # when level use '--site' path must be venv path,
 # this directory will be inserted at the beginning of the PATH.
 pipconfig_pip_virtualenv: ""

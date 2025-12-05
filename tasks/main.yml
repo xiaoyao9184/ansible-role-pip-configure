@@ -23,6 +23,15 @@
   vars:
     level: "--{{ pipconfig_pip_level | default('user') }}"
   block:
+  - name: Upgrade pip before set
+    when: pipconfig_pip_upgrade == 'before'
+    become: "{{ level == '--global' }}"
+    environment:
+      PATH: "{{ (pipconfig_pip_virtualenv | length > 0) | ternary(pipconfig_pip_virtualenv ~ '/bin:' ~ ansible_env.PATH, ansible_env.PATH) }}"
+    shell:
+      cmd: "{{ pipconfig_pip_cmd }} install --upgrade pip"
+      executable: /bin/bash
+
   - name: Use pip command to set
     become: "{{ level == '--global' }}"
     environment:
@@ -30,6 +39,15 @@
     loop: "{{ pipconfig_pip_options | default({},true) | dict2items() }}"
     shell:
       cmd: "{{ pipconfig_pip_cmd }} config {{ level }} set {{ item.key }} \"{{ item.value }}\""
+      executable: /bin/bash
+
+  - name: Upgrade pip after set
+    when: pipconfig_pip_upgrade == 'after'
+    become: "{{ level == '--global' }}"
+    environment:
+      PATH: "{{ (pipconfig_pip_virtualenv | length > 0) | ternary(pipconfig_pip_virtualenv ~ '/bin:' ~ ansible_env.PATH, ansible_env.PATH) }}"
+    shell:
+      cmd: "{{ pipconfig_pip_cmd }} install --upgrade pip"
       executable: /bin/bash
 
 # vim: et:sw=2:syntax=yaml:ts=2:
