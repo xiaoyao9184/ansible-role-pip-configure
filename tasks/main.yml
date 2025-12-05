@@ -1,13 +1,19 @@
 ---
 - name: Ensure PIP config directory exist and can be written in.
+  vars:
+    file_parent_dir: "{{ pipconfig_file | dirname }}"
+    dest: "{{ (pipconfig_dir | default(None,true) == None) | ternary(file_parent_dir, pipconfig_dir) }}"
   file:
-    dest: "{{ pipconfig_dir }}"
+    dest: "{{ dest }}"
     mode: "{{ (pipconfig_dir_mode | default(None,true) == None) | ternary(omit, pipconfig_dir_mode) }}"
     state: directory
 
 - name: Install PIP config
+  vars:
+    dir_file_path: "{{ pipconfig_dir + '/' + pipconfig_file }}"
+    dest: "{{ (pipconfig_dir | default(None,true) == None) | ternary(pipconfig_file, dir_file_path) }}"
   template:
-    dest: "{{ pipconfig_dir + '/' + pipconfig_file }}"
+    dest: "{{ dest }}"
     mode: "{{ pipconfig_file_mode }}"
     src: "pip.conf"
 
