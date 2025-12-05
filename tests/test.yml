@@ -234,4 +234,52 @@
       register: config_file_check
       failed_when: 'config_file_check is not success'
 
+
+- hosts: servers
+  name: "Ensure use a custom template file."
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars/all.yml
+  vars:
+    pipconfig_dir: "{{ insecure_base_dir }}/custom-template"
+    pipconfig_template_file: "{{ playbook_dir }}/pip.conf.j2"
+    pipconfig_global_index_url: "https://custom-global-index.example.com/simple/"
+    pipconfig_install_index_url: "https://custom-install-index.example.com/simple/"
+  roles:
+    - role: "pip-configure"
+
+  tasks:
+    - name: "Get file stats"
+      stat:
+        path: "{{ pipconfig_dir }}/{{ pipconfig_file }}"
+      register: config_file_check
+      failed_when: 'config_file_check is not success'
+
+    - name: "Get dir stats"
+      stat:
+        path: "{{ pipconfig_dir }}"
+      register: config_dir_check
+      failed_when: 'config_dir_check is not success or config_dir_check.stat.mode != pipconfig_dir_mode'
+
+    - name: "Assert '{{ pipconfig_file }}' contain global index-url."
+      community.general.ini_file:
+        path: "{{ pipconfig_dir }}/{{ pipconfig_file }}"
+        section: global
+        option: index-url 
+        value: "{{ pipconfig_global_index_url }}"
+        state: present
+      register: findurl_lines_in_file_check
+      failed_when: findurl_lines_in_file_check.changed
+
+    - name: "Assert '{{ pipconfig_file }}' contain install index-url."
+      community.general.ini_file:
+        path: "{{ pipconfig_dir }}/{{ pipconfig_file }}"
+        section: install
+        option: index-url 
+        value: "{{ pipconfig_install_index_url }}"
+        state: present
+      register: findurl_lines_in_file_check
+      failed_when: findurl_lines_in_file_check.changed
+
 # vim: et:sw=2:syntax=yaml:ts=2:
