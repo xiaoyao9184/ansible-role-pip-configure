@@ -15,6 +15,6 @@
   template:
     dest: "{{ dest }}"
     mode: "{{ pipconfig_file_mode }}"
-    src: "pip.conf"
+    src: "{{ pipconfig_template_file }}"
 
 # vim: et:sw=2:syntax=yaml:ts=2:

@@ -8,3 +8,4 @@ pipconfig_find_links_urls: []
 pipconfig_index_url: ""
 pipconfig_timeout: 10
 
+pipconfig_template_file: "pip.conf"
