@@ -149,4 +149,68 @@
       failed_when: "findurl_lines_in_file_check.changed"
 
 
+- hosts: servers
+  name: "Ensure exists directory override are effective."
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars/all.yml
+  vars:
+    pipconfig_dir: "{{ insecure_base_dir }}/exists-override"
+  pre_tasks:
+    - name: "Create config directory"
+      file:
+        path: "{{ pipconfig_dir }}"
+        mode: "0755"
+        state: directory
+
+  roles:
+    - role: "pip-configure"
+
+  tasks:
+    - name: "Get file stats"
+      stat:
+        path: "{{ pipconfig_dir }}/{{ pipconfig_file }}"
+      register: config_file_check
+      failed_when: 'config_file_check is not success'
+
+    - name: "Get dir stats"
+      stat:
+        path: "{{ pipconfig_dir }}"
+      register: config_dir_check
+      failed_when: 'config_dir_check is not success or config_dir_check.stat.mode != pipconfig_dir_mode'
+
+
+- hosts: servers
+  name: "Ensure exists directory skip is effective."
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars/all.yml
+  vars:
+    pipconfig_dir: "{{ insecure_base_dir }}/exists-skip"
+    pipconfig_dir_mode: ""
+  pre_tasks:
+    - name: "Create config directory"
+      file:
+        path: "{{ pipconfig_dir }}"
+        mode: "0700"
+        state: directory
+
+  roles:
+    - role: "pip-configure"
+
+  tasks:
+    - name: "Get file stats"
+      stat:
+        path: "{{ pipconfig_dir }}/{{ pipconfig_file }}"
+      register: config_file_check
+      failed_when: 'config_file_check is not success'
+
+    - name: "Get dir stats"
+      stat:
+        path: "{{ pipconfig_dir }}"
+      register: config_dir_check
+      failed_when: 'config_dir_check is not success or config_dir_check.stat.mode == pipconfig_dir_mode'
+
 # vim: et:sw=2:syntax=yaml:ts=2:
