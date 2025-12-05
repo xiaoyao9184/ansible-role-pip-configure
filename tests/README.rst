@@ -11,7 +11,7 @@ If you want to run the tests locally, you will need to:
 
 - create a new virtualenv for this project::
 
-    $ module="$([ '2' = "`python --version 2>&1 | cut -f 2 -d \  | head -c 1`" ] && echo 'virtualenv' || echo 'venv'
+    $ module="$([ '2' = "`python --version 2>&1 | cut -f 2 -d \  | head -c 1`" ] && echo 'virtualenv' || echo 'venv')"
     $ python -m "${module}" ansible-role-testing
 
   Or:
