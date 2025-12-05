@@ -336,4 +336,118 @@
       register: findurl_lines_in_file_check
       failed_when: findurl_lines_in_file_check.changed
 
+
+- hosts: servers
+  name: "Ensure pip is upgraded before command set."
+  connection: local
+  # need to gather facts to get ansible_env.PATH
+  gather_facts: true
+  vars_files:
+    - vars/all.yml
+  vars:
+    pipconfig_dir: "{{ insecure_base_dir }}/upgrade-pip-before"
+    pipconfig_pip_virtualenv: "{{ pipconfig_dir }}/.venv"
+    pipconfig_pip_upgrade: before
+    # pip has upgraded, so it cant use `--site` option
+    pipconfig_pip_level: site
+    pipconfig_pip_options:
+      global.timeout: 100
+  pre_tasks:
+    - name: "Create config directory"
+      file:
+        path: "{{ pipconfig_dir }}"
+        mode: "0777"
+        state: directory
+
+    - name: "Init venv {{ pipconfig_pip_virtualenv }}"
+      shell:
+        cmd: "python -m venv {{ pipconfig_pip_virtualenv }}"
+      register: venv_dir_init
+
+  roles:
+    - role: "pip-configure"
+
+  tasks:
+    - name: "Get file stats"
+      stat:
+        path: "{{ pipconfig_dir }}/{{ pipconfig_file }}"
+      register: config_file_check
+      failed_when: 'config_file_check is not success'
+
+    - name: "Get venv file stats"
+      stat:
+        path: "{{ pipconfig_dir }}/.venv/pip.conf"
+      register: config_file_check
+      failed_when: 'config_file_check is not success'
+
+    - name: "Assert '{{ pipconfig_dir }}/.venv/pip.conf' contain global timeout."
+      community.general.ini_file:
+        path: "{{ pipconfig_dir }}/.venv/pip.conf"
+        section: global
+        option: timeout
+        value: "{{ pipconfig_pip_options['global.timeout'] }}"
+        state: present
+      register: findurl_lines_in_file_check
+      failed_when: findurl_lines_in_file_check.changed
+
+
+- hosts: servers
+  name: "Ensure pip is upgraded after command set."
+  connection: local
+  # need to gather facts to get ansible_env.PATH
+  gather_facts: true
+  vars_files:
+    - vars/all.yml
+  vars:
+    pipconfig_dir: "{{ insecure_base_dir }}/upgrade-pip-after"
+    pipconfig_pip_virtualenv: "{{ pipconfig_dir }}/.venv"
+    pipconfig_pip_upgrade: after
+    # pip version 19.1, there was no `--site` option; only `--venv` could be used.
+    pipconfig_pip_level: venv
+    pipconfig_pip_options:
+      global.timeout: 100
+  pre_tasks:
+    - name: "Create config directory"
+      file:
+        path: "{{ pipconfig_dir }}"
+        mode: "0777"
+        state: directory
+
+    - name: "Init venv {{ pipconfig_pip_virtualenv }}"
+      shell:
+        cmd: "python -m venv {{ pipconfig_pip_virtualenv }}"
+      register: venv_dir_init
+
+  roles:
+    - role: "pip-configure"
+
+  tasks:
+    - name: "Check pip version upgraded"
+      shell:
+        cmd: "{{ pipconfig_dir }}/.venv/bin/pip config --help"
+      register: pip_version_check
+      failed_when: "'--site' not in pip_version_check.stdout"
+
+    - name: "Get file stats"
+      stat:
+        path: "{{ pipconfig_dir }}/{{ pipconfig_file }}"
+      register: config_file_check
+      failed_when: 'config_file_check is not success'
+
+    - name: "Get venv file stats"
+      stat:
+        path: "{{ pipconfig_dir }}/.venv/pip.conf"
+      register: config_file_check
+      failed_when: 'config_file_check is not success'
+
+    - name: "Assert '{{ pipconfig_dir }}/.venv/pip.conf' contain global timeout."
+      community.general.ini_file:
+        path: "{{ pipconfig_dir }}/.venv/pip.conf"
+        section: global
+        option: timeout
+        value: "{{ pipconfig_pip_options['global.timeout'] }}"
+        state: present
+      register: findurl_lines_in_file_check
+      failed_when: findurl_lines_in_file_check.changed
+
 # vim: et:sw=2:syntax=yaml:ts=2:
