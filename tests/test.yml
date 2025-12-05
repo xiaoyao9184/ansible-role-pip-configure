@@ -266,7 +266,7 @@
       community.general.ini_file:
         path: "{{ pipconfig_dir }}/{{ pipconfig_file }}"
         section: global
-        option: index-url 
+        option: index-url
         value: "{{ pipconfig_global_index_url }}"
         state: present
       register: findurl_lines_in_file_check
@@ -276,8 +276,62 @@
       community.general.ini_file:
         path: "{{ pipconfig_dir }}/{{ pipconfig_file }}"
         section: install
-        option: index-url 
+        option: index-url
         value: "{{ pipconfig_install_index_url }}"
+        state: present
+      register: findurl_lines_in_file_check
+      failed_when: findurl_lines_in_file_check.changed
+
+
+- hosts: servers
+  name: "Ensure that use command set site config are available."
+  connection: local
+  # need to gather facts to get ansible_env.PATH
+  gather_facts: true
+  vars_files:
+    - vars/all.yml
+  vars:
+    pipconfig_dir: "{{ insecure_base_dir }}/command-set"
+    pipconfig_pip_virtualenv: "{{ pipconfig_dir }}/.venv"
+    # pip version 19.1, there was no `--site` option; only `--venv` could be used.
+    pipconfig_pip_level: venv
+    pipconfig_pip_options:
+      global.index-url: "https://command-global-index.example.com/simple/"
+      install.index-url: "https://command-install-index.example.com/simple/\nhttps://command-install-index.example.com/simple2/"
+  pre_tasks:
+    - name: "Create config directory"
+      file:
+        path: "{{ pipconfig_dir }}"
+        mode: "0777"
+        state: directory
+
+    - name: "Init venv {{ pipconfig_pip_virtualenv }}"
+      shell:
+        cmd: "python -m venv {{ pipconfig_pip_virtualenv }}"
+      register: venv_dir_init
+
+  roles:
+    - role: "pip-configure"
+
+  tasks:
+    - name: "Get file stats"
+      stat:
+        path: "{{ pipconfig_dir }}/{{ pipconfig_file }}"
+      register: config_file_check
+      failed_when: 'config_file_check is not success'
+
+    - name: "Get venv file stats"
+      stat:
+        path: "{{ pipconfig_dir }}/.venv/pip.conf"
+      register: config_file_check
+      failed_when: 'config_file_check is not success'
+
+    - name: "Assert '{{ pipconfig_dir }}/.venv/pip.conf' contain global index-url."
+      community.general.ini_file:
+        path: "{{ pipconfig_dir }}/.venv/pip.conf"
+        section: global
+        option: index-url
+        value: "{{ pipconfig_pip_options['global.index-url'] }}"
         state: present
       register: findurl_lines_in_file_check
       failed_when: findurl_lines_in_file_check.changed
