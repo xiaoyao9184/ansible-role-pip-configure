@@ -213,4 +213,25 @@
       register: config_dir_check
       failed_when: 'config_dir_check is not success or config_dir_check.stat.mode == pipconfig_dir_mode'
 
+
+- hosts: servers
+  name: "Ensure the full file path without directory is available."
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars/all.yml
+  vars:
+    pipconfig_dir: ""
+    pipconfig_dir_mode: ""
+    pipconfig_file: "{{ insecure_base_dir }}/only-file/pip.conf"
+  roles:
+    - role: "pip-configure"
+
+  tasks:
+    - name: "Get file stats"
+      stat:
+        path: "{{ pipconfig_dir }}/{{ pipconfig_file }}"
+      register: config_file_check
+      failed_when: 'config_file_check is not success'
+
 # vim: et:sw=2:syntax=yaml:ts=2:
