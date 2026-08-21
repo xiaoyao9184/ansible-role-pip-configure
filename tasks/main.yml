@@ -19,7 +19,7 @@
       mode: "{{ pipconfig_file_mode }}"
       src: "{{ pipconfig_template_file }}"
 
-- # when: pipconfig_pip_options | length > 0
+- # when: pipconfig_pip_options | length > 0 and pipconfig_pip_upgrade in ['before','after']
   vars:
     level: "--{{ pipconfig_pip_level | default('user') }}"
   block:
